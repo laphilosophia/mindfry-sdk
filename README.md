@@ -1,4 +1,4 @@
-# 🧠🔥 MindFry SDK
+# MindFry SDK
 
 > Official client libraries for **MindFry** - The World's First Ephemeral Graph Database
 
