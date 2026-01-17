@@ -3,7 +3,7 @@
  *
  * Error codes returned by the MindFry server.
  */
-export const enum ErrorCode {
+export enum ErrorCode {
   /** Unknown error */
   UNKNOWN = 0x00,
   /** Invalid OpCode */
@@ -28,5 +28,6 @@ export const enum ErrorCode {
  * Get human-readable name for ErrorCode
  */
 export function errorCodeName(code: ErrorCode): string {
-  return ErrorCode[code] ?? `UNKNOWN(0x${code.toString(16)})`
+  const name = ErrorCode[code]
+  return name !== undefined ? name : `UNKNOWN(0x${code.toString(16)})`
 }

@@ -4,7 +4,7 @@
  * Each command has a unique 1-byte OpCode for O(1) parsing.
  * These values MUST match the Rust implementation exactly.
  */
-export const enum OpCode {
+export enum OpCode {
   // ═══════════════════════════════════════════════════════════════
   // LINEAGE OPERATIONS (0x10-0x1F)
   // ═══════════════════════════════════════════════════════════════
@@ -65,5 +65,6 @@ export function isResponseOpCode(opcode: number): boolean {
  * Get human-readable name for OpCode
  */
 export function opcodeName(opcode: OpCode): string {
-  return OpCode[opcode] ?? `UNKNOWN(0x${opcode.toString(16)})`
+  const name = OpCode[opcode]
+  return name !== undefined ? name : `UNKNOWN(0x${opcode.toString(16)})`
 }

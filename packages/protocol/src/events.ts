@@ -3,7 +3,7 @@
  *
  * Event types for subscription-based streaming.
  */
-export const enum EventMask {
+export enum EventMask {
   /** Lineage created */
   LINEAGE_CREATED = 1 << 0,
   /** Lineage stimulated */
@@ -25,7 +25,7 @@ export const enum EventMask {
 /**
  * Physics parameters that can be tuned
  */
-export const enum PhysicsParam {
+export enum PhysicsParam {
   /** Global decay rate multiplier */
   DECAY_MULTIPLIER = 0x01,
   /** Trauma rigidity threshold */
