@@ -3,7 +3,7 @@
 > Official client libraries for **MindFry** - The World's First Ephemeral Graph Database
 
 [![License: Apache](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![npm](https://img.shields.io/npm/v/@mindfry/client)](https://www.npmjs.com/package/@mindfry/client)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)]()
 
 ## What is MindFry?
 
@@ -14,17 +14,17 @@ This SDK provides high-performance client libraries to interact with a MindFry s
 ## Installation
 
 ```bash
-npm install @mindfry/client
+npm install mindfry
 # or
-pnpm add @mindfry/client
+pnpm add mindfry
 # or
-yarn add @mindfry/client
+yarn add mindfry
 ```
 
 ## Quick Start
 
 ```typescript
-import { MindFry } from '@mindfry/client'
+import { MindFry } from 'mindfry'
 
 // Connect to MindFry server
 const brain = new MindFry({
@@ -35,25 +35,18 @@ const brain = new MindFry({
 await brain.connect()
 
 // Create memories (lineages)
-await brain.lineage.create({ key: 'fire', energy: 0.9 })
-await brain.lineage.create({ key: 'heat', energy: 0.7 })
-await brain.lineage.create({ key: 'danger', energy: 0.6 })
+await brain.lineage.create({ key: 'A', energy: 0.1 })
+await brain.lineage.create({ key: 'B', energy: 0.1 })
 
-// Create associations (bonds)
-await brain.bond.connect({ from: 'fire', to: 'heat', strength: 0.8 })
-await brain.bond.connect({ from: 'fire', to: 'danger', strength: 0.6 })
+// Create synergy bond
+await brain.bond.connect({ from: 'A', to: 'B', strength: 1.0, polarity: 1 })
 
-// Query neighbors
-const neighbors = await brain.query.neighbors('fire')
-console.log(neighbors)
-// [
-//   { id: 'heat', bondStrength: 0.8, isLearned: false },
-//   { id: 'danger', bondStrength: 0.6, isLearned: false }
-// ]
+// Stimulate A - energy auto-propagates to B!
+await brain.lineage.stimulate({ key: 'A', delta: 1.0 })
 
-// Get database stats
-const stats = await brain.system.stats()
-console.log(`Lineages: ${stats.lineageCount}, Bonds: ${stats.bondCount}`)
+// Check B's energy (it increased!)
+const b = await brain.lineage.get('B')
+console.log(`B's energy: ${b.energy}`) // ~0.6 (propagated from A)
 
 await brain.disconnect()
 ```
@@ -91,12 +84,16 @@ await brain.lineage.create({
   decayRate: 0.001, // Decay rate per tick
 })
 
-// Read
+// Read (with optional QueryFlags)
 const info = await brain.lineage.get('fire')
+const infoNoSideEffect = await brain.lineage.get('fire', 0x04) // NO_SIDE_EFFECTS
 // → { id, energy, threshold, decayRate, rigidity, isConscious, lastAccessMs }
 
-// Update (stimulate)
+// Stimulate (auto-propagates to neighbors by default)
 await brain.lineage.stimulate({ key: 'fire', delta: 0.1 })
+
+// Surgical mode (no propagation)
+await brain.lineage.stimulate({ key: 'fire', delta: 0.1, flags: 0x01 })
 
 // Touch (refresh access time)
 await brain.lineage.touch('fire')
@@ -104,6 +101,23 @@ await brain.lineage.touch('fire')
 // Delete (forget)
 await brain.lineage.forget('fire')
 ```
+
+### Control Flags
+
+#### QueryFlags (for `get`)
+
+| Flag                | Value | Effect                         |
+| ------------------- | ----- | ------------------------------ |
+| `BYPASS_FILTERS`    | 0x01  | Skip Cortex/Antagonism filters |
+| `INCLUDE_REPRESSED` | 0x02  | Show hidden data               |
+| `NO_SIDE_EFFECTS`   | 0x04  | Read without observer effect   |
+| `FORENSIC`          | 0x07  | All flags (god mode)           |
+
+#### StimulateFlags (for `stimulate`)
+
+| Flag           | Value | Effect                       |
+| -------------- | ----- | ---------------------------- |
+| `NO_PROPAGATE` | 0x01  | Surgical mode - no cascading |
 
 ### Bond (Association) Operations
 
