@@ -418,6 +418,25 @@ export class MindFry {
 
       await this.send(OpCode.PHYSICS_TUNE, payload)
     },
+
+    /**
+     * Set the Cortex mood (emotional state)
+     * Affects consciousness thresholds and decision-making.
+     *
+     * @param mood Value from -1.0 (stressed/strict) to +1.0 (excited/lenient)
+     * @example
+     * // Make the system more lenient (lower thresholds)
+     * await brain.system.setMood(0.8);
+     *
+     * // Make the system stricter (higher thresholds)
+     * await brain.system.setMood(-0.5);
+     */
+    setMood: async (mood: number): Promise<void> => {
+      // Clamp to valid range
+      const clampedMood = Math.max(-1.0, Math.min(1.0, mood))
+      const payload = new PayloadBuilder().writeF32(clampedMood).build()
+      await this.send(OpCode.SYS_MOOD_SET, payload)
+    },
   }
 
   // ─────────────────────────────────────────────────────────────

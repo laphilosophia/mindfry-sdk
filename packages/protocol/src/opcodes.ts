@@ -39,6 +39,7 @@ export enum OpCode {
   SYS_RESTORE = 0x43,
   SYS_FREEZE = 0x44,
   PHYSICS_TUNE = 0x45,
+  SYS_MOOD_SET = 0x46,
 
   // ═══════════════════════════════════════════════════════════════
   // STREAM OPERATIONS (0x50-0x5F)
