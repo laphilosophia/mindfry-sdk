@@ -8,7 +8,7 @@
     "url": "https://github.com/laphilosophia/mindfry-sdk"
   },
   "author": "Erdem Arslan <erdemarslan@ymail.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",

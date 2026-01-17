@@ -8,17 +8,18 @@
  *
  * Flow:
  * 1. Request comes in → assign sequence ID → add to pending map → send frame
- * 2. Response comes in → parse frame → match by sequence ID → resolve promise
+ * 2. Response comes in → FrameDecoder assembles → match by FIFO order → resolve promise
  *
  * Pipelining is TRANSPARENT to the caller - each call returns a Promise.
  */
 
-import { ErrorCode, OpCode, type ParsedFrame, parseFrame, PayloadReader } from '@mindfry/protocol'
+import { ErrorCode, OpCode, PayloadReader } from '@mindfry/protocol'
 import { Socket } from 'node:net'
+import { FrameDecoder } from './framer.js'
 
 /** Pending request awaiting response */
 interface PendingRequest {
-  resolve: (payload: Uint8Array) => void
+  resolve: (payload: Buffer) => void
   reject: (error: Error) => void
   opcode: OpCode
   timestamp: number
@@ -30,22 +31,26 @@ export interface PipelineConfig {
   timeout: number
   /** Maximum pending requests before backpressure (default: 1000) */
   maxPending: number
+  /** Maximum frame size in bytes (default: 16MB) */
+  maxFrameSize: number
 }
 
 const DEFAULT_CONFIG: PipelineConfig = {
   timeout: 30_000,
   maxPending: 1000,
+  maxFrameSize: 16 * 1024 * 1024,
 }
 
 /**
  * Request Pipeline Manager
  *
  * Handles multiplexing multiple requests over a single TCP connection.
+ * Uses FrameDecoder for proper TCP stream fragmentation handling.
  */
 export class RequestPipeline {
   private sequenceId = 0
   private pending: Map<number, PendingRequest> = new Map()
-  private receiveBuffer: Uint8Array = new Uint8Array(0)
+  private decoder: FrameDecoder
   private config: PipelineConfig
   private timeoutChecker: ReturnType<typeof setInterval> | null = null
 
@@ -54,6 +59,7 @@ export class RequestPipeline {
     config: Partial<PipelineConfig> = {},
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config }
+    this.decoder = new FrameDecoder(this.config.maxFrameSize)
     this.setupSocketHandlers()
     this.startTimeoutChecker()
   }
@@ -76,7 +82,7 @@ export class RequestPipeline {
       const seqId = this.nextSequenceId()
 
       this.pending.set(seqId, {
-        resolve,
+        resolve: (buf: Buffer) => resolve(new Uint8Array(buf)),
         reject,
         opcode,
         timestamp: Date.now(),
@@ -101,6 +107,13 @@ export class RequestPipeline {
   }
 
   /**
+   * Bytes waiting in the frame decoder buffer
+   */
+  get pendingBytes(): number {
+    return this.decoder.pendingBytes
+  }
+
+  /**
    * Clean up resources
    */
   destroy(): void {
@@ -108,6 +121,10 @@ export class RequestPipeline {
       clearInterval(this.timeoutChecker)
       this.timeoutChecker = null
     }
+
+    // Clean up decoder
+    this.decoder.removeAllListeners()
+    this.decoder.reset()
 
     // Reject all pending requests
     for (const [seqId, req] of this.pending) {
@@ -123,8 +140,19 @@ export class RequestPipeline {
   }
 
   private setupSocketHandlers(): void {
+    // Socket data → FrameDecoder
     this.socket.on('data', (chunk: Buffer) => {
-      this.onData(chunk)
+      this.decoder.push(chunk)
+    })
+
+    // FrameDecoder → handleFrame (complete frames only)
+    this.decoder.on('frame', (payload: Buffer) => {
+      this.handleFrame(payload)
+    })
+
+    // FrameDecoder errors (e.g., oversized frames)
+    this.decoder.on('error', (err: Error) => {
+      this.rejectAllPending(err)
     })
 
     this.socket.on('error', (err) => {
@@ -136,37 +164,21 @@ export class RequestPipeline {
     })
   }
 
-  private onData(chunk: Buffer): void {
-    // Append to receive buffer
-    const newBuffer = new Uint8Array(this.receiveBuffer.length + chunk.length)
-    newBuffer.set(this.receiveBuffer, 0)
-    newBuffer.set(chunk, this.receiveBuffer.length)
-    this.receiveBuffer = newBuffer
-
-    // Process complete frames
-    this.processFrames()
-  }
-
-  private processFrames(): void {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    while (true) {
-      const frame = parseFrame(this.receiveBuffer)
-      if (!frame) {
-        break // Need more data
-      }
-
-      this.handleFrame(frame)
-
-      // Remove processed frame from buffer
-      this.receiveBuffer = this.receiveBuffer.slice(frame.totalLength)
+  private handleFrame(payload: Buffer): void {
+    // payload = [opcode (1 byte)] + [rest...]
+    if (payload.length < 1) {
+      console.warn('Received empty frame')
+      return
     }
-  }
 
-  private handleFrame(frame: ParsedFrame): void {
+    const opcode = payload[0] as OpCode
+    const data = payload.subarray(1)
+
     // Get the oldest pending request (FIFO order)
     const firstEntry = this.pending.entries().next()
     if (firstEntry.done) {
-      // No pending request - this is unexpected
+      // No pending request - could be an async event/notification
+      // For now, log and ignore (future: emit as event)
       console.warn('Received response with no pending request')
       return
     }
@@ -175,16 +187,16 @@ export class RequestPipeline {
     this.pending.delete(seqId)
 
     // Check for error response
-    if (frame.opcode === OpCode.RESPONSE_ERROR) {
-      const reader = new PayloadReader(frame.payload)
+    if (opcode === OpCode.RESPONSE_ERROR) {
+      const reader = new PayloadReader(new Uint8Array(data))
       const errorCode = reader.readU8() as ErrorCode
       const message = reader.readString()
       request.reject(new MindFryError(errorCode, message))
       return
     }
 
-    // Success - resolve with payload
-    request.resolve(frame.payload)
+    // Success - resolve with payload (without opcode byte)
+    request.resolve(data)
   }
 
   private rejectAllPending(error: Error): void {

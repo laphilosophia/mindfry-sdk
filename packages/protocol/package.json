@@ -29,7 +29,7 @@
     "url": "https://github.com/laphilosophia/mindfry-sdk",
     "directory": "packages/protocol"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
   }
