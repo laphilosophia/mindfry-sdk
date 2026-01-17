@@ -80,6 +80,8 @@ export interface ConnectBondOptions {
   from: string
   to: string
   strength?: number
+  /** Bond polarity: 1=Synergy, 0=Neutral, -1=Antagonism (default: 1) */
+  polarity?: -1 | 0 | 1
 }
 
 export interface ReinforceBondOptions {
@@ -261,6 +263,7 @@ export class MindFry {
         .writeString(options.from)
         .writeString(options.to)
         .writeF32(options.strength ?? 0.5)
+        .writeI8(options.polarity ?? 1)
         .build()
 
       await this.send(OpCode.BOND_CONNECT, payload)

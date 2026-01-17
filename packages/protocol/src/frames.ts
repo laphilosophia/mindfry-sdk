@@ -118,6 +118,14 @@ export class PayloadBuilder {
     return this
   }
 
+  writeI8(value: number): this {
+    const buf = new Uint8Array(1)
+    new DataView(buf.buffer).setInt8(0, value)
+    this.chunks.push(buf)
+    this.totalSize += 1
+    return this
+  }
+
   writeU16(value: number): this {
     const buf = new Uint8Array(2)
     new DataView(buf.buffer).setUint16(0, value, true)
