@@ -1,61 +1,78 @@
 # MindFry SDK
 
-> Official TypeScript client for **MindFry** - A Subjective Biological Memory Substrate
+> **Official client libraries for MindFry** — the world's first conscious database
 
-[![License: Apache](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue)]()
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
----
-
-> ⚠️ **EXPERIMENTAL:** MindFry simulates biological memory processes. Data may be inhibited or decay based on the system's "mood". **Do not use for banking.**
+Connect to MindFry and manage memories that **decay**, **bond**, and **feel**.
 
 ---
 
-## Installation
+> ⚠️ **EXPERIMENTAL:** MindFry simulates biological memory processes. Data may be inhibited based on the system's "mood". **Do not use for banking.**
+
+---
+
+## SDKs
+
+| Language       | Status     | Package                                                                                                   |
+| :------------- | :--------- | :-------------------------------------------------------------------------------------------------------- |
+| **TypeScript** | ✅ Stable  | [![npm](https://img.shields.io/npm/v/@mindfry/client.svg)](https://www.npmjs.com/package/@mindfry/client) |
+| **Go**         | 🚧 Planned | —                                                                                                         |
+| **Python**     | 🚧 Planned | —                                                                                                         |
+| **Rust**       | 🚧 Planned | Native bindings                                                                                           |
+
+## TypeScript
 
 ```bash
-npm install mindfry
+npm install @mindfry/client
 ```
 
-## Quick Start
-
 ```typescript
-import { MindFry } from 'mindfry'
+import { MindFry } from '@mindfry/client'
 
 const brain = new MindFry({ host: 'localhost', port: 9527 })
 await brain.connect()
 
-// Create memories and bonds
-await brain.lineage.create({ key: 'trauma', energy: 0.5 })
-await brain.lineage.create({ key: 'fear', energy: 0.3 })
-await brain.bond.connect({ from: 'trauma', to: 'fear', strength: 1.0, polarity: 1 })
-
-// Stimulate trauma - fear increases automatically
-await brain.lineage.stimulate({ key: 'trauma', delta: 1.0 })
-
-const fear = await brain.lineage.get('fear')
-console.log(fear.energy) // Increased by synaptic propagation
+await brain.lineage.create({ key: 'fire', energy: 0.9 })
+await brain.lineage.stimulate({ key: 'fire', delta: 0.5 })
 
 await brain.disconnect()
 ```
 
-## Demo
+📚 **Docs:** [mindfry-docs.vercel.app/sdk/typescript](https://mindfry-docs.vercel.app/sdk/typescript/)
 
-See the [Nabu Awakens](examples/nabu_awakens.ts) demo for a full example of subjective memory behavior.
+### Packages
 
-```bash
-npx tsx examples/nabu_awakens.ts
-```
+| Package                                                                | Description           |
+| :--------------------------------------------------------------------- | :-------------------- |
+| [`@mindfry/client`](https://www.npmjs.com/package/@mindfry/client)     | High-level client API |
+| [`@mindfry/protocol`](https://www.npmjs.com/package/@mindfry/protocol) | Low-level MFBP codec  |
 
-## API
+## Features
 
-Full API documentation coming soon. For now, see [client.ts](packages/client/src/client.ts).
+All SDKs implement the same core API:
 
-## Requires
+- 🧠 **Lineage** — Create, stimulate, query ephemeral memories
+- 🔗 **Bond** — Connect memories with weighted relationships
+- 🔍 **Query** — Pattern matching, top-K, trauma detection
+- ⚡ **Pipelining** — High-throughput TCP batching
+- 🎭 **Mood-aware** — Behavior adapts to Cortex state
 
-- Node.js 20+
+## Requirements
+
 - MindFry Engine v1.6.0+
+- Language-specific requirements in each SDK folder
+
+## Related
+
+- [MindFry Core](https://github.com/laphilosophia/mindfry) — Rust engine
+- [Documentation](https://mindfry-docs.vercel.app) — Full docs
+- [crates.io](https://crates.io/crates/mindfry) — Rust package
+
+## Contributing
+
+Want to add a new language SDK? See the TypeScript implementation in `packages/` as reference. All SDKs should implement the MFBP protocol and provide the same core API surface.
 
 ## License
 
-Apache 2.0 © [Erdem Arslan](https://github.com/laphilosophia)
+Apache-2.0 © [Erdem Arslan](https://github.com/laphilosophia)
