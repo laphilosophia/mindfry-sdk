@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-17
+
+### ⚠️ Breaking Change: Response Framing
+
+`lineage.get()` now receives `[status:u8] + [payload?]` from server.
+
+### Changed
+
+- **parseLineageInfo**: Now reads status byte first
+  - `0x00` (Found): Parse LineageInfo payload
+  - `0x01` (NotFound): Throws `Error: Lineage lookup failed: NotFound`
+  - `0x02` (Repressed): Throws `Error: Lineage lookup failed: Repressed`
+  - `0x03` (Dormant): Throws `Error: Lineage lookup failed: Dormant`
+
+### Compatibility
+
+- Requires MindFry Engine v1.5.0+
+- **Breaking**: Clients on v0.2.x will fail to parse v1.5.0 responses
+
+---
+
 ## [0.2.1] - 2026-01-17
 
 ### Added

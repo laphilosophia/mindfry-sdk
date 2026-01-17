@@ -497,8 +497,15 @@ export class MindFry {
 
   private parseLineageInfo(data: Uint8Array): LineageInfo {
     const reader = new PayloadReader(data)
-    // Skip response data type byte (0x02 = Lineage)
+    // Skip response data type byte (0x02 = LineageResult)
     reader.readU8()
+    // Read status header: 0=Found, 1=NotFound, 2=Repressed, 3=Dormant
+    const status = reader.readU8()
+    if (status !== 0) {
+      const statusNames = ['Found', 'NotFound', 'Repressed', 'Dormant']
+      throw new Error(`Lineage lookup failed: ${statusNames[status] ?? 'Unknown'}`)
+    }
+    // Payload present only if Found
     return {
       id: reader.readString(),
       energy: reader.readF32(),
