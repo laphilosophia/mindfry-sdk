@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2026-01-17
 
+### Compatibility Note (MindFry v1.8.0)
+
+SDK v0.4.0 is fully compatible with MindFry Engine v1.8.0:
+
+- **`ErrorCode.WARMING_UP`**: Already supported since v0.4.0
+- **Crash Recovery**: Transparent — SDK handles `WarmingUp` errors the same way
+- **Exhaustion Backpressure**: SDK receives graceful rejections under load
+
+No SDK changes required for v1.8.0 features.
+
+---
+
+## [0.4.0] - 2026-01-17
+
 ### Added
 
 - **StimulateFlags**: `stimulate()` now accepts optional `flags` parameter
